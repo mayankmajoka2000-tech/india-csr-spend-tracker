@@ -33,8 +33,8 @@ outcomes calculator built on a published impact assessment.
 3. **The money concentrates where companies sit, not where need is.** Maharashtra receives Rs 540 per resident and
    Delhi Rs 1,162, against Rs 77 in Uttar Pradesh. Five states take 55% of the spend that can be placed on a map.
    Another 23% is reported only as "PAN India" or not located at all.
-4. **The top 20 spenders are 11% of all CSR.** HDFC Bank (Rs 922 cr), Reliance (Rs 899 cr), TCS (Rs 813 cr),
-   ONGC (Rs 612 cr) and Tata Steel (Rs 573 cr) lead.
+4. **The top 20 spenders account for 24% of all CSR, and the top 5 for 11%.** HDFC Bank (Rs 922 cr), Reliance (Rs 899 cr),
+   TCS (Rs 813 cr), ONGC (Rs 612 cr) and Tata Steel (Rs 573 cr) lead.
 5. **Benchmarking example:** Tata Steel spends 99% of its located CSR in Odisha and Jharkhand, where it operates.
    It is 5.5 points overweight on education and livelihood and 6 points underweight on environment compared
    with the other top-100 spenders.
