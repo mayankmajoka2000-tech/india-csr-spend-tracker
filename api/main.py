@@ -89,7 +89,8 @@ def root():
             "years": YEARS, "companies": int(DF.company.nunique()),
             "total_cr": _r(DF.amount_cr.sum()), "source": SOURCE,
             "endpoints": ["/overview", "/sectors", "/states", "/companies/search", "/companies/{name}",
-                          "/benchmark", "/top", "/unspent", "/livelihood/case", "/livelihood/evaluate"]}
+                          "/benchmark", "/top", "/unspent", "/livelihood/case", "/livelihood/evaluate",
+                          "/cofunding/defaults", "/cofunding/model", "/cofunding/scenarios"]}
 
 
 @app.get("/health", tags=["System"])
@@ -355,3 +356,87 @@ def livelihood_evaluate(p: Programme):
     cmp_ = {k: {"yours": v, "sdi_bhubaneswar": ref.get(k)} for k, v in mine.items() if v is not None}
     return {"programme": p.name, "kpis": mine, "vs_reference_case": cmp_,
             "reference": CASE["programme"] + ", " + CASE["year"]}
+
+
+# ------------------------------------------------------------------------------- CSR + carbon co-funding
+from dataclasses import asdict as _asdict  # noqa: E402
+
+from cofunding import SOURCES as CF_SOURCES  # noqa: E402
+from cofunding import Params as CFParams  # noqa: E402
+from cofunding import run as cf_run  # noqa: E402
+from cofunding import scenarios as cf_scenarios  # noqa: E402
+
+
+class CoFunding(BaseModel):
+    """Any field left out uses the default from GET /cofunding/defaults."""
+    practice: Literal["awd", "agroforestry"] = "awd"
+    hectares: float | None = Field(None, gt=0, examples=[2000])
+    farmers: int | None = Field(None, gt=0, examples=[1500])
+    years: int | None = Field(None, ge=1, le=30, examples=[10])
+    price_usd: float | None = Field(None, ge=0, examples=[15])
+    price_growth: float | None = Field(None, ge=-0.5, le=0.5)
+    fx_inr_per_usd: float | None = Field(None, gt=0)
+    farmer_share: float | None = Field(None, ge=0, le=1, examples=[0.6])
+    first_issuance_year: int | None = Field(None, ge=1)
+    buffer_share: float | None = Field(None, ge=0, le=1)
+    credits_per_ha_override: float | None = Field(None, ge=0, description="Net t/ha/yr, e.g. from a measured baseline")
+    baseline_ch4_kg_ha_day: float | None = Field(None, gt=0)
+    season_days: int | None = Field(None, gt=0, le=200)
+    seasons_per_year: int | None = Field(None, ge=1, le=3)
+    adoption_rate: float | None = Field(None, ge=0, le=1)
+    trees_per_ha: int | None = Field(None, gt=0, le=2500)
+    tco2e_per_tree_yr: float | None = Field(None, ge=0)
+    tree_survival: float | None = Field(None, ge=0, le=1)
+    upfront_per_ha: float | None = Field(None, ge=0)
+    annual_per_ha: float | None = Field(None, ge=0)
+    project_development: float | None = Field(None, ge=0)
+    validation: float | None = Field(None, ge=0)
+    verification_per_event: float | None = Field(None, ge=0)
+    csr_budget: float | None = Field(None, ge=0, description="INR; checks whether it covers the CSR need")
+
+
+def _cf_params(body: CoFunding) -> CFParams:
+    given = {k: v for k, v in body.model_dump().items() if v is not None}
+    return CFParams(**given)
+
+
+@app.get("/cofunding/defaults", tags=["CSR + carbon co-funding"],
+         summary="Default assumptions for a practice, with sources")
+def cofunding_defaults(practice: Literal["awd", "agroforestry"] = "awd"):
+    p = CFParams(practice=practice).resolve()
+    return {"practice": practice, "params": _asdict(p), "sources": CF_SOURCES,
+            "unsourced_assumptions": ["price_growth", "fx_inr_per_usd", "first_issuance_year", "farmer_share",
+                                      "season_days", "seasons_per_year", "adoption_rate", "trees_per_ha",
+                                      "tree_survival", "years_to_full_sequestration", "buffer_share (agroforestry)",
+                                      "upfront/annual costs (AWD; agroforestry fencing)", "project_development",
+                                      "validation", "verification_per_event"]}
+
+
+@app.post("/cofunding/model", tags=["CSR + carbon co-funding"],
+          summary="Year-by-year CSR need, carbon revenue and farmer income for a farmer carbon project")
+def cofunding_model(body: CoFunding):
+    try:
+        return cf_run(_cf_params(body))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.get("/cofunding/scenarios", tags=["CSR + carbon co-funding"],
+         summary="Sensitivity to carbon price (and, for AWD, credit yield)")
+def cofunding_scenarios(practice: Literal["awd", "agroforestry"] = "awd"):
+    return cf_scenarios(practice)
+
+
+from fastapi.responses import HTMLResponse  # noqa: E402
+
+_CALC = (ROOT / "web" / "cofunding_calculator.html").read_text(encoding="utf-8")
+_CALC_PAGE = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
+              '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
+              '<style>:root{color-scheme:light dark}body{margin:0;font:14px system-ui,sans-serif}'
+              '[hidden]{display:none!important}</style></head><body>' + _CALC + '</body></html>')
+
+
+@app.get("/calculator", tags=["CSR + carbon co-funding"], response_class=HTMLResponse,
+         summary="Interactive co-funding calculator (opens in a browser)")
+def calculator():
+    return _CALC_PAGE

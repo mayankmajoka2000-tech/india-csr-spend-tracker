@@ -6,7 +6,9 @@ Rs 2.2 lakh crore, 6.3 lakh projects), broken down by development sector, sub-se
 PSU status. It also includes a curated table of unspent CSR transfers and a livelihood & skilling
 outcomes calculator built on a published impact assessment.
 
-📚 **Docs:** `/docs` once deployed · 🧪 10 tests · ✅ totals reconcile to MCA's figures to the paisa
+🚀 **Live API:** https://india-csr-spend-api.onrender.com · 📚 **Docs:** https://india-csr-spend-api.onrender.com/docs · 🧮 **Calculator:** https://india-csr-spend-api.onrender.com/calculator
+
+🧪 15 tests · ✅ totals reconcile to MCA's figures to the paisa
 
 ## Endpoints
 
@@ -22,6 +24,10 @@ outcomes calculator built on a published impact assessment.
 | `GET /unspent` | Unspent CSR moved to Unspent CSR Accounts under Section 135(6), per company, with sources |
 | `GET /livelihood/case` | SDI Bhubaneswar (IndianOil-led CSR): placement, cost per placement, income change, payback, partner-level results |
 | `POST /livelihood/evaluate` | Enter any skilling programme's numbers, get the same KPIs side by side with the SDI case |
+| `GET /cofunding/defaults` | Assumptions for a farmer carbon project (rice water-saving or agroforestry), each with its source or marked as an assumption |
+| `POST /cofunding/model` | Year-by-year CSR need, credit revenue, farmer income and break-even price for any project you describe |
+| `GET /cofunding/scenarios` | Sensitivity to carbon price and, for rice, to credit yield |
+| `GET /calculator` | The same model as an interactive page |
 
 ## What the data shows (FY2023-24 unless stated)
 
@@ -56,6 +62,40 @@ Built on IndianOil's published impact assessment of the **Skill Development Inst
 
 **The definition matters:** the same programme can be reported as 94%, 85% or 70% "placed". The API shows all three
 and lets you run any programme through the same calculation (`POST /livelihood/evaluate`).
+
+## CSR + carbon co-funding model
+
+**The question:** how much CSR money does a farmer carbon project need, and for how long, before carbon
+credits can carry it? It covers two practices: alternate wetting and drying (AWD) in irrigated rice, which cuts
+methane, and agroforestry, which removes CO2.
+
+**Sources:**
+- AWD: IPCC 2019 defaults via the Gold Standard rice methodology (India baseline 0.85 kg CH4/ha/day,
+  AWD scaling factor 0.55, GWP 28, 15% uncertainty).
+- Agroforestry: ICAR-CRIDA's Verra VM0047 project in Chitradurga (1,373 tCO2e/yr from 15,600 trees;
+  Rs 200 planting and Rs 50 management per tree).
+- Prices: legacy rice credits $5-12/t, next-generation $20-25/t (Quantum Commodity Intelligence).
+- Fees: Verra registry fees.
+- Everything unsourced (verification costs, issuance lag, farmer share, adoption) is a labelled default you can change.
+
+**CSR rule built in:** surplus from CSR activities cannot become company profit (CSR Rule 7(2), MCA FAQ 55), so
+credit revenue goes to farmers (60% by default) and the project's own costs. Anything left over is reported as
+surplus to plough back.
+
+**What it shows (2,000 ha, 1,500 farmers, 10 years):**
+
+| | Rice water-saving (AWD) | Agroforestry |
+|---|---|---|
+| Net credits per ha per year | 0.8 t (IPCC defaults) | 6.0 t |
+| CSR needed over 10 years at $15/t | Rs 2.27 cr | Rs 11.21 cr |
+| Carbon price at which credits cover running costs | about $45/t | about $26/t |
+| Farmer income from credits, per farmer per year | Rs 761 | Rs 5,056 |
+
+- **At IPCC default factors, rice water-saving does not pay for itself at any price seen so far.** CSR is a
+  long-term co-funder, not a bridge.
+- **With measured baselines the picture flips.** At RMI's 4-6 credits per hectare from newer methodologies,
+  the same project needs CSR only for year-1 set-up (Rs 73 lakh) and is self-sustaining from year 2 at $12/t or more.
+- **Agroforestry can graduate off CSR** if it sells at next-generation prices above about $26/t.
 
 ## Data and method
 

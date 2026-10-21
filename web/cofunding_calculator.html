@@ -1,0 +1,317 @@
+<title>Farmer Carbon Co-Funding Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: two-pane workbench — inputs rail on the left, results (summary, chart, ledger) on the right; stacks on phones. */
+:root{
+  --bg:#f3f6f1; --panel:#ffffff; --ink:#18241c; --muted:#5b6b60; --line:#d8e0d6;
+  --paddy:#2f7d4f; --water:#2f6f9a; --soil:#9a6a2f; --csr:#b8432f; --chip:#e7efe5;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101612; --panel:#172019; --ink:#e3ebe4; --muted:#9aab9f; --line:#2b372f;
+  --paddy:#5fbf86; --water:#6aaedb; --soil:#d4a265; --csr:#ec7a62; --chip:#1f2b22; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101612; --panel:#172019; --ink:#e3ebe4; --muted:#9aab9f; --line:#2b372f;
+  --paddy:#5fbf86; --water:#6aaedb; --soil:#d4a265; --csr:#ec7a62; --chip:#1f2b22; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:8px 0 0;color:var(--muted);max-width:68ch}
+.grid{display:grid;grid-template-columns:330px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.rail{display:flex;flex-direction:column;gap:16px}
+.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 14px var(--body);padding:9px 6px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--paddy);color:#fff}
+.field{display:flex;flex-direction:column;gap:6px}
+.field .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.field output{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--paddy)}
+input[type=number]{width:100%;font:500 14px var(--mono);padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.hint{font-size:12px;color:var(--muted)}
+details summary{cursor:pointer;font-weight:600;font-size:14px}
+details[open] summary{margin-bottom:12px}
+details .fields{display:flex;flex-direction:column;gap:12px}
+:focus-visible{outline:2px solid var(--water);outline-offset:2px}
+.results{display:flex;flex-direction:column;gap:18px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpi .s{font-size:12px;color:var(--muted)}
+.kpi.csr .v{color:var(--csr)}
+.verdict{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:8px;background:var(--chip);border-left:4px solid var(--paddy)}
+.verdict.warn{border-left-color:var(--csr)}
+.verdict p{margin:0}
+.chart-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.chart-head h2,.panel h2{font-family:var(--display);font-size:18px;margin:0}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+svg text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.csr{color:var(--csr);font-weight:600}
+.notes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:720px){.notes{grid-template-columns:minmax(0,1fr)}}
+.notes ul{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted)}
+.notes a{color:var(--water)}
+.tag{display:inline-block;font:500 11px var(--mono);padding:1px 6px;border-radius:4px;background:var(--chip);color:var(--muted);margin-left:4px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Farmer Carbon Co-Funding Calculator</h1>
+    <p>How much CSR money does a farmer carbon project need, and for how long, before carbon credits can carry it? Pick a practice, set the project size and the carbon price, and the model works out each year's gap. Defaults use IPCC factors and a registered Indian project. Edit any assumption.</p>
+  </header>
+
+  <div class="grid">
+    <aside class="panel rail" aria-label="Inputs">
+      <div class="field">
+        <span class="label">Practice</span>
+        <div class="seg" role="group" aria-label="Practice">
+          <button type="button" id="p-awd" aria-pressed="true">Rice water-saving (AWD)</button>
+          <button type="button" id="p-agro" aria-pressed="false">Agroforestry</button>
+        </div>
+        <span class="hint" id="practice-hint"></span>
+      </div>
+
+      <div class="field"><div class="row"><label class="label" for="hectares">Area</label><output id="o-hectares"></output></div>
+        <input type="range" id="hectares" min="200" max="20000" step="100" value="2000"></div>
+      <div class="field"><div class="row"><label class="label" for="farmers">Farmers</label><output id="o-farmers"></output></div>
+        <input type="range" id="farmers" min="100" max="15000" step="100" value="1500"></div>
+      <div class="field"><div class="row"><label class="label" for="price">Carbon price</label><output id="o-price"></output></div>
+        <input type="range" id="price" min="2" max="50" step="1" value="15">
+        <span class="hint">Legacy rice credits sold at $5–12/t; next-generation, remote-sensing-verified ones at $20–25/t.</span></div>
+      <div class="field"><div class="row"><label class="label" for="share">Farmers' share of credit revenue</label><output id="o-share"></output></div>
+        <input type="range" id="share" min="0" max="100" step="5" value="60"></div>
+      <div class="field"><div class="row"><label class="label" for="years">Horizon</label><output id="o-years"></output></div>
+        <input type="range" id="years" min="5" max="20" step="1" value="10"></div>
+
+      <details>
+        <summary>Carbon yield</summary>
+        <div class="fields">
+          <div class="field" data-for="awd"><label class="label" for="season">Flooded days per season</label><input type="number" id="season" value="110" min="60" max="200"></div>
+          <div class="field" data-for="awd"><label class="label" for="seasons">Rice seasons per year</label><input type="number" id="seasons" value="1" min="1" max="3"></div>
+          <div class="field" data-for="awd"><label class="label" for="adoption">Area actually practising AWD (%)</label><input type="number" id="adoption" value="80" min="0" max="100"></div>
+          <div class="field" data-for="agro"><label class="label" for="trees">Trees per hectare</label><input type="number" id="trees" value="100" min="10" max="2500"></div>
+          <div class="field" data-for="agro"><label class="label" for="survival">Tree survival (%)</label><input type="number" id="survival" value="80" min="0" max="100"></div>
+          <div class="field"><label class="label" for="override">Override: net credits per ha per year</label><input type="number" id="override" placeholder="leave blank to calculate" min="0" step="0.1">
+            <span class="hint">RMI expects 4–6 credits/ha from newer rice methodologies with measured baselines.</span></div>
+          <div class="field"><label class="label" for="lag">Year credits are first sold</label><input type="number" id="lag" value="2" min="1" max="10"></div>
+        </div>
+      </details>
+      <details>
+        <summary>Costs (₹)</summary>
+        <div class="fields">
+          <div class="field"><label class="label" for="upfront">Set-up per hectare</label><input type="number" id="upfront" min="0" step="100"></div>
+          <div class="field"><label class="label" for="annual">Running cost per hectare per year</label><input type="number" id="annual" min="0" step="50"></div>
+          <div class="field"><label class="label" for="dev">Project development (one-off)</label><input type="number" id="dev" value="1500000" min="0" step="50000"></div>
+          <div class="field"><label class="label" for="valid">Validation (one-off)</label><input type="number" id="valid" value="1200000" min="0" step="50000"></div>
+          <div class="field"><label class="label" for="verif">Verification per issuance</label><input type="number" id="verif" value="900000" min="0" step="50000"></div>
+        </div>
+      </details>
+    </aside>
+
+    <section class="results" aria-live="polite">
+      <div class="kpis">
+        <div class="kpi csr"><span class="label">CSR needed</span><span class="v" id="k-csr"></span><span class="s" id="k-csr-s"></span></div>
+        <div class="kpi"><span class="label">Self-sustaining from</span><span class="v" id="k-be"></span><span class="s" id="k-be-s"></span></div>
+        <div class="kpi"><span class="label">Break-even price</span><span class="v" id="k-bep"></span><span class="s">ongoing costs covered</span></div>
+        <div class="kpi"><span class="label">Credits / ha / yr</span><span class="v" id="k-cpha"></span><span class="s" id="k-cpha-s"></span></div>
+        <div class="kpi"><span class="label">Farmer income</span><span class="v" id="k-farm"></span><span class="s">per farmer per year, from credits</span></div>
+        <div class="kpi"><span class="label">CSR per tonne</span><span class="v" id="k-cpt"></span><span class="s">₹ of CSR per tCO₂e generated</span></div>
+      </div>
+
+      <div class="verdict" id="verdict"><p id="verdict-text"></p></div>
+
+      <div class="panel">
+        <div class="chart-head"><h2>Who pays each year</h2>
+          <div class="legend"><span><i style="background:var(--csr)"></i>CSR funding</span><span><i style="background:var(--paddy)"></i>Credit revenue kept by project</span><span><i style="background:var(--soil)"></i>Paid to farmers</span></div></div>
+        <svg id="chart" viewBox="0 0 760 260" width="100%" role="img" aria-label="Stacked bars of CSR funding, project credit revenue and farmer payments by year"></svg>
+      </div>
+
+      <div class="panel">
+        <h2>Year by year</h2>
+        <div class="tablewrap"><table id="ledger"><thead><tr>
+          <th>Year</th><th>Credits sold (t)</th><th>Revenue</th><th>To farmers</th><th>Project costs</th><th>CSR needed</th><th>Surplus</th></tr></thead><tbody></tbody></table></div>
+      </div>
+
+      <div class="notes">
+        <div class="panel"><h2>The CSR rule</h2>
+          <ul>
+            <li>Surplus from CSR activities cannot become company profit. It must go back into the project, an Unspent CSR Account or a Schedule VII fund (CSR Rules 2014, Rule 7(2) as amended 2021; MCA FAQ 55). So in this model credit revenue goes to farmers and the project's own costs, and any leftover is shown as surplus to plough back.</li>
+            <li>Whether a company may count CSR-funded credits toward its own targets has not been clarified by MCA. Take legal advice before structuring one.</li>
+            <li>Verra cancelled 37 legacy rice projects (4.5 million credits) over additionality. Projects in areas that already drain fields face that risk.</li>
+          </ul></div>
+        <div class="panel"><h2>Sources</h2>
+          <ul>
+            <li>AWD factors: <a href="https://globalgoals.goldstandard.org/standards/437_V1.0_LUF_AGR_Methane-emission-reduction-by-AWM-practice-in-rice-cultivation.pdf" target="_blank" rel="noopener">Gold Standard rice methodology</a> (IPCC 2019 defaults: India 0.85 kg CH₄/ha/day, AWD factor 0.55, GWP 28, 15% uncertainty).</li>
+            <li>Credit yields and project risk: <a href="https://rmi.org/technical-explainer-carbon-credits-for-improved-rice-cultivation/" target="_blank" rel="noopener">RMI technical explainer</a>.</li>
+            <li>Prices: <a href="https://www.qcintel.com/carbon/article/analysis-next-generation-rice-methane-carbon-credits-set-to-double-in-price-22192.html" target="_blank" rel="noopener">Quantum Commodity Intelligence, Mar 2024</a>.</li>
+            <li>Agroforestry rate and planting costs: <a href="https://www.icar-crida.res.in/assets_c/img/Research/Externally_Funded/Pilot-project-VCM-2025.pdf" target="_blank" rel="noopener">ICAR-CRIDA Verra VM0047 project</a> (1,373 tCO₂e/yr from 15,600 trees; ₹200 planting, ₹50 management per tree).</li>
+            <li>Registry fees: <a href="https://verra.org/verra-publishes-updated-fee-schedules/" target="_blank" rel="noopener">Verra fee schedule</a> ($2,500 registration review, $0.20 per credit).</li>
+            <li>Not sourced, set as assumptions you can edit: FX ₹88/$, issuance lag, farmer share, adoption, survival, AWD costs, development, validation and verification costs, 15% agroforestry buffer.</li>
+          </ul></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const FX = 88, REG_FIXED_USD = 2500, REG_PER_CREDIT_USD = 0.20;
+  const state = { practice: "awd" };
+
+  function params(){
+    const p = state.practice;
+    const num = (id, d) => { const v = parseFloat($(id).value); return Number.isFinite(v) ? v : d; };
+    const trees = num("trees", 100);
+    const over = $("override").value.trim() === "" ? null : Math.max(0, parseFloat($("override").value));
+    return {
+      practice: p, hectares: num("hectares", 2000), farmers: num("farmers", 1500), years: num("years", 10),
+      price: num("price", 15), share: num("share", 60) / 100,
+      lag: Math.min(Math.max(1, Math.round(num("lag", 2))), num("years", 10)),
+      buffer: p === "awd" ? 0 : 0.15,
+      ef: 0.85, sf: 0.55, season: num("season", 110), seasons: num("seasons", 1), gwp: 28, unc: 0.15,
+      adoption: Math.min(Math.max(num("adoption", 80), 0), 100) / 100,
+      trees, perTree: 1373 / 15600, survival: Math.min(Math.max(num("survival", 80), 0), 100) / 100, ramp: 3,
+      upfront: num("upfront", p === "awd" ? 1500 : 200 * trees + 5000),
+      annual: num("annual", p === "awd" ? 800 : 50 * trees),
+      dev: num("dev", 1500000), valid: num("valid", 1200000), verif: num("verif", 900000), override: over
+    };
+  }
+
+  function creditsPerHa(q, year){
+    if (q.override !== null && Number.isFinite(q.override)) return q.override;
+    if (q.practice === "awd"){
+      const kg = q.ef * q.season * q.seasons * (1 - q.sf);
+      return kg / 1000 * q.gwp * q.adoption * (1 - q.unc) * (1 - q.buffer);
+    }
+    const r = Math.min(year / q.ramp, 1);
+    return q.trees * q.survival * q.perTree * r * (1 - q.buffer);
+  }
+
+  function run(q){
+    const lag = q.lag - 1, gen = [], rows = [];
+    for (let y = 1; y <= q.years; y++) gen.push(creditsPerHa(q, y) * q.hectares);
+    let cum = 0, be = null, tot = {csr:0, farm:0, surplus:0};
+    for (let y = 1; y <= q.years; y++){
+      const sold = (y - 1 - lag) >= 0 ? gen[y - 1 - lag] : 0;
+      const price = q.price * FX, revenue = sold * price;
+      const registry = (REG_PER_CREDIT_USD * sold + (y === q.lag ? REG_FIXED_USD : 0)) * FX;
+      const costs = (y === 1 ? q.upfront * q.hectares + q.dev + q.valid : 0) + q.annual * q.hectares + (sold > 0 ? q.verif : 0) + registry;
+      const farm = revenue * q.share, toProject = revenue - farm, gap = costs - toProject;
+      const csr = Math.max(gap, 0), surplus = Math.max(-gap, 0);
+      if (be === null && sold > 0 && toProject >= costs) be = y;
+      cum += csr; tot.csr += csr; tot.farm += farm; tot.surplus += surplus;
+      rows.push({y, sold, revenue, farm, toProject: Math.min(toProject, costs), costs, csr, surplus});
+    }
+    const genTotal = gen.reduce((a,b)=>a+b,0);
+    return {rows, be, tot, genTotal, cpha: creditsPerHa(q, q.years), bep: breakeven(q)};
+  }
+
+  function breakeven(q){
+    const y = q.years, lag = q.lag - 1;
+    const sold = creditsPerHa(q, y - lag) * q.hectares;   // steady-state year (ramp complete)
+    if (sold <= 0) return null;
+    const gap = pr => q.annual * q.hectares + q.verif + REG_PER_CREDIT_USD * sold * FX - sold * pr * FX * (1 - q.share);
+    let lo = 0, hi = 1000; if (gap(hi) > 0) return null;
+    for (let i = 0; i < 60; i++){ const m = (lo + hi) / 2; if (gap(m) > 0) lo = m; else hi = m; }
+    return hi;
+  }
+
+  const inr = v => "₹" + Math.round(v).toLocaleString("en-IN");
+  const cr = v => v >= 1e7 ? "₹" + (v / 1e7).toFixed(2) + " cr" : "₹" + (v / 1e5).toFixed(1) + " lakh";
+
+  function render(){
+    const q = params(), r = run(q);
+    $("o-hectares").textContent = q.hectares.toLocaleString("en-IN") + " ha";
+    $("o-farmers").textContent = q.farmers.toLocaleString("en-IN");
+    $("o-price").textContent = "$" + q.price + "/t (₹" + (q.price * FX).toLocaleString("en-IN") + ")";
+    $("o-share").textContent = Math.round(q.share * 100) + "%";
+    $("o-years").textContent = q.years + " years";
+    $("upfront").placeholder = q.upfront; $("annual").placeholder = q.annual;
+    $("practice-hint").textContent = q.practice === "awd"
+      ? "Draining irrigated paddies between floodings cuts methane by about 45% under IPCC factors."
+      : "Fruit and timber trees on farm land remove CO₂ as they grow; credits ramp up over three years.";
+    document.querySelectorAll("[data-for]").forEach(el => { el.hidden = el.dataset.for !== q.practice; });
+
+    const csrYears = r.rows.filter(x => x.csr > 0.5).length;
+    $("k-csr").textContent = cr(r.tot.csr);
+    $("k-csr-s").textContent = "over " + csrYears + " of " + q.years + " years · " + inr(r.tot.csr / q.farmers) + " per farmer";
+    $("k-be").textContent = r.be ? "Year " + r.be : "Not reached";
+    $("k-be-s").textContent = r.be ? "credits cover all project costs" : "within " + q.years + " years";
+    $("k-bep").textContent = r.bep === null ? "n/a" : "$" + r.bep.toFixed(1) + "/t";
+    $("k-cpha").textContent = r.cpha.toFixed(2) + " t";
+    $("k-cpha-s").textContent = q.override !== null ? "your override" : (q.practice === "awd" ? "IPCC default factors" : "ICAR-CRIDA per-tree rate");
+    $("k-farm").textContent = inr(r.tot.farm / q.farmers / q.years);
+    $("k-cpt").textContent = r.genTotal ? inr(r.tot.csr / r.genTotal) : "n/a";
+
+    const v = $("verdict");
+    if (r.be){
+      v.className = "verdict";
+      $("verdict-text").textContent = "CSR works as a bridge here. It covers set-up and the first " + (r.be - 1) + " year(s); from year " + r.be + " credit revenue pays the project's costs" + (r.tot.surplus > 0 ? ", and " + cr(r.tot.surplus) + " of surplus must be ploughed back into the project." : ".");
+    } else {
+      v.className = "verdict warn";
+      $("verdict-text").textContent = "At $" + q.price + "/t credits never cover the running costs, so CSR is a long-term co-funder, not a bridge. " + (r.bep !== null ? "Ongoing costs are covered from about $" + r.bep.toFixed(0) + "/t" : "No realistic price covers them") + "; try a higher yield, lower running costs or a bigger project to spread fixed costs.";
+    }
+
+    // chart
+    const svg = $("chart"), W = 760, H = 260, L = 64, R = 10, T = 12, B = 30;
+    const maxV = Math.max(1, ...r.rows.map(x => x.csr + x.toProject + x.farm));
+    const step = niceStep(maxV / 4), top = Math.ceil(maxV / step) * step;
+    const bw = (W - L - R) / r.rows.length, ys = v => T + (H - T - B) * (1 - v / top);
+    let g = "";
+    for (let t = 0; t <= top + 1e-6; t += step){
+      const yy = ys(t);
+      g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`;
+      g += `<text x="${L - 6}" y="${yy + 4}" text-anchor="end">${axis(t)}</text>`;
+    }
+    r.rows.forEach((x, i) => {
+      const xx = L + i * bw + bw * 0.18, w = bw * 0.64;
+      let base = 0;
+      [["csr", "var(--csr)"], ["toProject", "var(--paddy)"], ["farm", "var(--soil)"]].forEach(([k, c]) => {
+        const val = x[k]; if (val <= 0) return;
+        const y1 = ys(base + val), y0 = ys(base);
+        g += `<rect x="${xx}" y="${y1}" width="${w}" height="${Math.max(0, y0 - y1)}" fill="${c}"><title>Year ${x.y}: ${k === "csr" ? "CSR" : k === "farm" ? "Farmers" : "Project"} ${inr(val)}</title></rect>`;
+        base += val;
+      });
+      g += `<text x="${xx + w / 2}" y="${H - 10}" text-anchor="middle">Y${x.y}</text>`;
+    });
+    svg.innerHTML = g;
+
+    // table
+    $("ledger").querySelector("tbody").innerHTML = r.rows.map(x =>
+      `<tr><td>Year ${x.y}</td><td>${Math.round(x.sold).toLocaleString("en-IN")}</td><td>${inr(x.revenue)}</td><td>${inr(x.farm)}</td><td>${inr(x.costs)}</td><td class="csr">${x.csr > 0.5 ? inr(x.csr) : "—"}</td><td>${x.surplus > 0.5 ? inr(x.surplus) : "—"}</td></tr>`).join("") +
+      `<tr><td><strong>Total</strong></td><td>${Math.round(r.rows.reduce((a,x)=>a+x.sold,0)).toLocaleString("en-IN")}</td><td>${inr(r.rows.reduce((a,x)=>a+x.revenue,0))}</td><td>${inr(r.tot.farm)}</td><td>${inr(r.rows.reduce((a,x)=>a+x.costs,0))}</td><td class="csr">${inr(r.tot.csr)}</td><td>${r.tot.surplus > 0.5 ? inr(r.tot.surplus) : "—"}</td></tr>`;
+  }
+  function niceStep(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+  function axis(v){ return v >= 1e7 ? (v / 1e7).toFixed(v % 1e7 ? 1 : 0) + " cr" : v >= 1e5 ? (v / 1e5).toFixed(0) + " L" : v.toFixed(0); }
+
+  function setPractice(p){
+    state.practice = p;
+    $("p-awd").setAttribute("aria-pressed", p === "awd"); $("p-agro").setAttribute("aria-pressed", p === "agroforestry");
+    $("upfront").value = ""; $("annual").value = ""; $("override").value = "";
+    render();
+  }
+  $("p-awd").addEventListener("click", () => setPractice("awd"));
+  $("p-agro").addEventListener("click", () => setPractice("agroforestry"));
+  document.querySelectorAll("input").forEach(el => el.addEventListener("input", render));
+  window.__model = {params, run};
+  render();
+})();
+</script>
