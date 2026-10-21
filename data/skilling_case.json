@@ -1,0 +1,33 @@
+{
+  "programme": "Skill Development Institute (SDI) Bhubaneswar",
+  "funder": "IndianOil (lead) with seven other oil & gas PSUs, via CSR",
+  "location": "Jatni, Khordha, Odisha",
+  "year": "FY2022-23",
+  "source": {
+    "title": "Impact Assessment Study Report on Contribution towards OPEX support for SDI-Bhubaneswar (IOCL, FY2025-26 impact assessment series)",
+    "url": "https://www.iocl.com/uploads/Impact-Assessment-Reports-for-FY-2025-26/IA46_IOCLSDIBBSRFinal.pdf",
+    "pages": {"institutional_table": "p.55-56 (Tables 3.3.2, 3.3.3)", "opex": "p.10-11", "alumni_income": "p.97 (Table 3.5.4)", "retention": "p.105 (Table 3.5.12)"}
+  },
+  "inputs": {
+    "opex_cr": 14.99,
+    "csr_grant_cr": 5.00,
+    "trained": 1007,
+    "certified": 980,
+    "seeking_job": 910,
+    "placed": 857,
+    "income_before_monthly_inr": 7000,
+    "income_after_monthly_inr": 22000,
+    "alumni_survey_n": 200,
+    "alumni_employed_share": 0.70,
+    "alumni_self_employed_share": 0.20
+  },
+  "partners": [
+    {"partner": "NTTF", "courses": 7, "trained": 511, "certified": 499, "seeking_job": 450, "placed": 435},
+    {"partner": "Schneider", "courses": 6, "trained": 156, "certified": 145, "seeking_job": 138, "placed": 137},
+    {"partner": "Siemens", "courses": 7, "trained": 217, "certified": 213, "seeking_job": 203, "placed": 185},
+    {"partner": "Cisco", "courses": 2, "trained": 26, "certified": 26, "seeking_job": 23, "placed": 5},
+    {"partner": "Tata Strive", "courses": 2, "trained": 77, "certified": 77, "seeking_job": 76, "placed": 75},
+    {"partner": "Phytech", "courses": 1, "trained": 20, "certified": 20, "seeking_job": 20, "placed": 20}
+  ],
+  "retention_working_alumni": {"n": 140, "lt_6m": 12, "6_12m": 30, "1_2y": 52, "2_3y": 36, "gt_3y": 10}
+}
