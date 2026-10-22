@@ -129,3 +129,8 @@ def test_cofunding_override_and_validation():
 def test_calculator_page():
     r = client.get("/calculator")
     assert r.status_code == 200 and "Farmer Carbon Co-Funding Calculator" in r.text
+
+
+def test_skilling_page():
+    r = client.get("/skilling")
+    assert r.status_code == 200 and "Skilling Outcomes Tracker" in r.text and "<!doctype html>" in r.text

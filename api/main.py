@@ -90,7 +90,8 @@ def root():
             "total_cr": _r(DF.amount_cr.sum()), "source": SOURCE,
             "endpoints": ["/overview", "/sectors", "/states", "/companies/search", "/companies/{name}",
                           "/benchmark", "/top", "/unspent", "/livelihood/case", "/livelihood/evaluate",
-                          "/cofunding/defaults", "/cofunding/model", "/cofunding/scenarios"]}
+                          "/cofunding/defaults", "/cofunding/model", "/cofunding/scenarios",
+                          "/calculator", "/skilling"]}
 
 
 @app.get("/health", tags=["System"])
@@ -434,6 +435,16 @@ _CALC_PAGE = ('<!doctype html><html lang="en"><head><meta charset="utf-8">'
               '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">'
               '<style>:root{color-scheme:light dark}body{margin:0;font:14px system-ui,sans-serif}'
               '[hidden]{display:none!important}</style></head><body>' + _CALC + '</body></html>')
+
+
+_SKILL = (ROOT / "web" / "skilling.html").read_text(encoding="utf-8")
+_SKILL_PAGE = _CALC_PAGE.replace(_CALC, _SKILL)
+
+
+@app.get("/skilling", tags=["Livelihood & skilling"], response_class=HTMLResponse,
+         summary="Interactive skilling outcomes page (opens in a browser)")
+def skilling_page():
+    return _SKILL_PAGE
 
 
 @app.get("/calculator", tags=["CSR + carbon co-funding"], response_class=HTMLResponse,

@@ -6,7 +6,7 @@ Rs 2.2 lakh crore, 6.3 lakh projects), broken down by development sector, sub-se
 PSU status. It also includes a curated table of unspent CSR transfers and a livelihood & skilling
 outcomes calculator built on a published impact assessment.
 
-🚀 **Live API:** https://india-csr-spend-api.onrender.com · 📚 **Docs:** https://india-csr-spend-api.onrender.com/docs · 🧮 **Calculator:** https://india-csr-spend-api.onrender.com/calculator
+🚀 **Live API:** https://india-csr-spend-api.onrender.com · 📚 **Docs:** https://india-csr-spend-api.onrender.com/docs · 🧮 **Calculator:** https://india-csr-spend-api.onrender.com/calculator · 🎓 **Skilling:** https://india-csr-spend-api.onrender.com/skilling
 
 🧪 15 tests · ✅ totals reconcile to MCA's figures to the paisa
 
@@ -28,6 +28,7 @@ outcomes calculator built on a published impact assessment.
 | `POST /cofunding/model` | Year-by-year CSR need, credit revenue, farmer income and break-even price for any project you describe |
 | `GET /cofunding/scenarios` | Sensitivity to carbon price and, for rice, to credit yield |
 | `GET /calculator` | The same model as an interactive page |
+| `GET /skilling` | Skilling outcomes as an interactive page: the SDI case plus a form to compare your own programme |
 
 ## What the data shows (FY2023-24 unless stated)
 

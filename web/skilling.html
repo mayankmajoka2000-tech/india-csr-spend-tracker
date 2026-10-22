@@ -1,0 +1,206 @@
+<title>Skilling Outcomes Tracker</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: case dashboard on top (KPIs, the three placement rates, partners, retention), evaluator below (form left, comparison right). */
+:root{
+  --bg:#f4f5f8; --panel:#ffffff; --ink:#1a1f2b; --muted:#5d6475; --line:#dcdfe7;
+  --accent:#3b5bdb; --good:#2f7d4f; --warn:#b8432f; --amber:#b07a1a; --chip:#e9ecf5;
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Public Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11141b; --panel:#181c25; --ink:#e4e7ef; --muted:#9aa1b2; --line:#2b3140;
+  --accent:#7d97ff; --good:#5fbf86; --warn:#ec7a62; --amber:#e0b155; --chip:#212736; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11141b; --panel:#181c25; --ink:#e4e7ef; --muted:#9aa1b2; --line:#2b3140;
+  --accent:#7d97ff; --good:#5fbf86; --warn:#ec7a62; --amber:#e0b155; --chip:#212736; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:19px;margin:0 0 4px}
+.lede{margin:8px 0 0;color:var(--muted);max-width:70ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;min-width:0}
+.sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.label{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);display:flex;flex-direction:column;gap:4px}
+.kpi .v{font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+.kpi .s{font-size:12px;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:820px){.two{grid-template-columns:minmax(0,1fr)}}
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar .top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.bar .top b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.track{height:12px;border-radius:6px;background:var(--chip);overflow:hidden;margin-top:5px}
+.fill{height:100%;border-radius:6px;background:var(--accent)}
+.bar small{color:var(--muted);font-size:12px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 9px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pill{display:inline-block;font:600 11px var(--mono);padding:2px 7px;border-radius:999px}
+.pill.good{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.mid{background:color-mix(in srgb,var(--amber) 20%,transparent);color:var(--amber)}
+.notes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:480px){form{grid-template-columns:minmax(0,1fr)}}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.wide{grid-column:1/-1}
+input{width:100%;font:500 14px var(--mono);padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.actions{grid-column:1/-1;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+button{font:600 14px var(--body);padding:9px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:transparent;color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.err{color:var(--warn);font-size:13px}
+.better{color:var(--good);font-weight:600}.worse{color:var(--warn);font-weight:600}
+a{color:var(--accent)}
+.foot{font-size:13px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="label">Livelihood & skilling · CSR outcomes</span>
+    <h1>Skilling Outcomes Tracker</h1>
+    <p class="lede">What does a CSR skilling programme actually deliver per rupee? This page reads a published impact assessment, shows its outcomes three honest ways, and lets you put your own programme's numbers beside it.</p>
+  </header>
+
+  <section class="panel" id="case">
+    <h2 id="case-title">Loading the reference case…</h2>
+    <p class="sub" id="case-sub"></p>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>“Placed” depends on what you count</h2>
+      <p class="sub">The same programme, three placement rates.</p>
+      <div class="bars" id="defs"></div>
+    </section>
+    <section class="panel">
+      <h2>How long alumni stay in work</h2>
+      <p class="sub" id="ret-sub"></p>
+      <div class="bars" id="ret"></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <h2>Results by training partner</h2>
+    <p class="sub">Placement rate among trainees who wanted a job.</p>
+    <div class="tablewrap"><table id="partners"><thead><tr><th>Partner</th><th>Courses</th><th>Trained</th><th>Certified</th><th>Seeking job</th><th>Placed</th><th>Placement rate</th></tr></thead><tbody></tbody></table></div>
+  </section>
+
+  <section class="panel">
+    <h2>Reading the numbers</h2>
+    <ul class="notes" id="notes"></ul>
+  </section>
+
+  <div class="two">
+    <section class="panel">
+      <h2>Evaluate your programme</h2>
+      <p class="sub">The example values show the format. Replace them with your programme's figures.</p>
+      <form id="f" novalidate>
+        <div class="field wide"><label class="label" for="name">Programme name</label><input id="name" value="Example: district retail-skills centre"></div>
+        <div class="field"><label class="label" for="cost">Total cost (₹ crore)</label><input id="cost" type="number" step="0.01" min="0" value="2.5"></div>
+        <div class="field"><label class="label" for="csr">CSR contribution (₹ crore)</label><input id="csr" type="number" step="0.01" min="0" value="1.5"></div>
+        <div class="field"><label class="label" for="trained">Trained</label><input id="trained" type="number" min="1" value="400"></div>
+        <div class="field"><label class="label" for="seeking">Seeking a job</label><input id="seeking" type="number" min="1" value="350"></div>
+        <div class="field"><label class="label" for="placed">Placed</label><input id="placed" type="number" min="0" value="260"></div>
+        <div class="field"><span class="label">&nbsp;</span></div>
+        <div class="field"><label class="label" for="before">Monthly income before (₹)</label><input id="before" type="number" min="0" value="6000"></div>
+        <div class="field"><label class="label" for="after">Monthly income after (₹)</label><input id="after" type="number" min="0" value="14000"></div>
+        <div class="actions"><button type="submit">Compare with reference case</button><span class="err" id="err" role="alert"></span></div>
+      </form>
+    </section>
+    <section class="panel">
+      <h2 id="cmp-title">Side by side</h2>
+      <p class="sub">Green = better than the reference case, red = worse.</p>
+      <div class="tablewrap"><table id="cmp"><thead><tr><th>Measure</th><th>Yours</th><th>Reference</th></tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const pct = v => v == null ? "—" : (v * 100).toFixed(1) + "%";
+  const inr = v => v == null ? "—" : "₹" + Math.round(v).toLocaleString("en-IN");
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const MEASURES = [
+    ["placement_rate_of_trained", "Placed / all trained", pct, true],
+    ["placement_rate_of_job_seekers", "Placed / job-seekers", pct, true],
+    ["cost_per_trainee_inr", "Cost per trainee", inr, false],
+    ["cost_per_placement_inr", "Cost per placement", inr, false],
+    ["csr_cost_per_placement_inr", "CSR cost per placement", inr, false],
+    ["monthly_income_gain_inr", "Monthly income gain", inr, true],
+    ["income_change", "Income change", pct, true],
+    ["payback_months_on_cost_per_placement", "Months of extra income to repay cost", v => v == null ? "—" : v.toFixed(1), false],
+    ["first_year_income_gain_per_rupee_spent", "First-year income gain per ₹1 spent", v => v == null ? "—" : "₹" + v.toFixed(2), true],
+  ];
+  function bar(label, value, note, max = 1, color){
+    const w = Math.max(0, Math.min(1, value / max)) * 100;
+    return `<div class="bar"><div class="top"><span>${esc(label)}</span><b>${pct(value)}</b></div>
+      <div class="track"><div class="fill" style="width:${w}%;${color ? "background:" + color : ""}"></div></div>${note ? `<small>${esc(note)}</small>` : ""}</div>`;
+  }
+
+  fetch("/livelihood/case").then(r => r.json()).then(c => {
+    const k = c.kpis, i = c.inputs;
+    $("case-title").textContent = c.programme;
+    $("case-sub").textContent = `${c.funder} · ${c.location} · ${c.year}`;
+    $("kpis").innerHTML = [
+      ["Trained", i.trained.toLocaleString("en-IN"), `${i.certified.toLocaleString("en-IN")} certified`],
+      ["Cost per placement", inr(k.cost_per_placement_inr), `CSR grant share ${inr(k.csr_cost_per_placement_inr)}`],
+      ["Monthly income", `₹${(i.income_before_monthly_inr/1000).toFixed(0)}k → ₹${(i.income_after_monthly_inr/1000).toFixed(0)}k`, `+${(k.income_change*100).toFixed(0)}%, alumni survey`],
+      ["Payback", `${k.payback_months_on_cost_per_placement.toFixed(0)} months`, "of a trainee's extra earnings"],
+    ].map(([l, v, s]) => `<div class="kpi"><span class="label">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`).join("");
+    $("defs").innerHTML =
+      bar("Placed ÷ trainees seeking a job", k.placement_rate_of_job_seekers, `${i.placed} of ${i.seeking_job} · the headline figure`) +
+      bar("Placed ÷ everyone trained", k.placement_rate_of_trained, `${i.placed} of ${i.trained}`) +
+      bar("In salaried work (alumni survey)", i.alumni_employed_share, `survey of ${i.alumni_survey_n} alumni; another ${Math.round(i.alumni_self_employed_share*100)}% self-employed`, 1, "var(--amber)");
+    const r = c.retention, n = r.n;
+    $("ret-sub").textContent = `${n} working alumni, by time in their current job.`;
+    $("ret").innerHTML = [["Under 6 months", r.lt_6m], ["6–12 months", r["6_12m"]], ["1–2 years", r["1_2y"]], ["2–3 years", r["2_3y"]], ["Over 3 years", r.gt_3y]]
+      .map(([l, v]) => bar(l, v / n, `${v} alumni`, 0.5, "var(--good)")).join("");
+    $("partners").querySelector("tbody").innerHTML = c.partners.map(p => {
+      const rate = p.placement_rate_of_job_seekers, cls = rate >= 0.95 ? "good" : rate >= 0.85 ? "mid" : "warn";
+      return `<tr><td>${esc(p.partner)}</td><td>${p.courses}</td><td>${p.trained}</td><td>${p.certified}</td><td>${p.seeking_job}</td><td>${p.placed}</td><td><span class="pill ${cls}">${pct(rate)}</span></td></tr>`;
+    }).join("");
+    $("notes").innerHTML = c.reading_the_numbers.map(t => `<li>${esc(t)}</li>`).join("");
+    $("foot").innerHTML = `Source: <a href="${c.source.url}" target="_blank" rel="noopener">${esc(c.source.title)}</a> (${esc(c.source.pages.institutional_table)}; income ${esc(c.source.pages.alumni_income)}; retention ${esc(c.source.pages.retention)}). Data and code: <a href="https://github.com/mayankmajoka2000-tech/india-csr-spend-tracker" target="_blank" rel="noopener">GitHub</a> · API: <a href="/docs">/docs</a>.`;
+    evaluate();
+  }).catch(() => { $("case-title").textContent = "Couldn't load the reference case. Refresh the page; the server may be waking up."; });
+
+  function val(id){ const s = $(id).value.trim(); return s === "" ? null : Number(s); }
+  function evaluate(e){
+    if (e) e.preventDefault();
+    $("err").textContent = "";
+    const body = {name: $("name").value || "My programme", total_cost_cr: val("cost"), csr_contribution_cr: val("csr"),
+      trained: val("trained"), placed: val("placed"), seeking_job: val("seeking"),
+      income_before_monthly_inr: val("before"), income_after_monthly_inr: val("after")};
+    if (!(body.total_cost_cr > 0) || !(body.trained > 0) || body.placed == null){ $("err").textContent = "Enter total cost, trained and placed."; return; }
+    if (body.placed > body.trained){ $("err").textContent = "Placed can't be more than trained."; return; }
+    if (body.seeking_job != null && body.placed > body.seeking_job){ $("err").textContent = "Placed can't be more than those seeking a job."; return; }
+    fetch("/livelihood/evaluate", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)})
+      .then(r => r.ok ? r.json() : r.json().then(j => Promise.reject(j.detail || "Check the numbers")))
+      .then(res => {
+        $("cmp-title").textContent = "Side by side: " + res.programme;
+        $("cmp").querySelector("tbody").innerHTML = MEASURES.filter(([k]) => res.vs_reference_case[k]).map(([k, label, fmt, higherBetter]) => {
+          const x = res.vs_reference_case[k], a = x.yours, b = x.sdi_bhubaneswar;
+          const cls = a == null || b == null || a === b ? "" : ((a > b) === higherBetter ? "better" : "worse");
+          return `<tr><td>${label}</td><td class="${cls}">${fmt(a)}</td><td>${fmt(b)}</td></tr>`;
+        }).join("");
+      }).catch(m => { $("err").textContent = typeof m === "string" ? m : "Couldn't compute. Check the numbers and try again."; });
+  }
+  $("f").addEventListener("submit", evaluate);
+})();
+</script>
